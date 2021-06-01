@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container">
-    <x-backnav title="Edit Transaction" backlink="{{ route('home') }}"/>
+    <x-backnav title="Transaction" backlink="{{ route('home') }}"/>
     @if ($errors->any())
     <div class="alert alert-danger">
         <ul>
@@ -12,24 +12,54 @@
         </ul>
     </div>
     @endif
-    {{ Form::model($item, ['route' => ['transaction.update', $item->id], 'method' => 'patch']) }}
-    <div class="form-body">
-        <x-transaction count="{{ $item->total_item }}" subtotal="{{ $item->total_price }}"/>
-        <input type="hidden" name="count" value="{{ $item->total_item }}" />
-        <input type="hidden" name="subtotal" value="{{ $item->total_price-$item->discount }}" />
+    @if(isset($trx))
+    {{ Form::model($trx, ['route' => ['transaction.update', $trx->id], 'method' => 'patch']) }}
+    @else
+    {{ Form::open(['route' => 'transaction.store']) }}
+    @endif
+    <div class="form-body" style="position: fixed;top:50px; background-color:#fff;width:100%;z-index:99">
+        @if(isset($trx))
+        <x-transaction count="{{ $trx->total_item ?? 0}}" subtotal="{{ $trx->total_price-$trx->discount-$trx->downpayment ?? 0 }}"/>
+        <input type="hidden" name="count" value="{{ $trx->total_item ?? 0 }}" />
+        @else
+        <x-transaction count="0" subtotal="0"/>
+        <input type="hidden" name="count" value="0" />
+        @endif
+    </div>
+    <div style="margin-top:130px">
+        <div class="row">
+            <div class="col-2">Name</div>
+            <div class="col-10">
+                <input type="text" name="customer" placeholder="Customer Name" value="{{ $trx->customer ?? '' }}" class="form-control block" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-2">Total</div>
+            <div class="col-10">
+                <input type="text" name="totalprice" value="{{ $trx->total_price ?? 0 }}" class="form-control block" readonly />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-2">DP</div>
+            <div class="col-10">
+                <input type="text" name="downpayment" placeholder="Down payment" value="{{ $trx->downpayment ?? '' }}" class="form-control block" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-2">Disc</div>
+            <div class="col-10">
+                <input type="text" name="discount" placeholder="Discount" value="{{ $trx->discount ?? '' }}" class="form-control block" />
+            </div>
+        </div>
     </div>
     <div>
-        <input type="text" name="discount" placeholder="Discount (IDR)" value="{{ $item->discount }}" class="form-control block" />
-        <input type="text" name="customer" placeholder="Customer Name" value="{{ $item->customer }}" class="form-control block" />
-    </div>
-    <div>
-        @foreach($item2 as $ii)
-        <x-product :item="$ii" button="plusminus" />
+        @foreach($items as $ii)
+        <x-productorder :item="$ii" class="btn-number" data-type="plus" data-id="{{$ii->id}}" data-price="{{$ii->price}}" data-field="quant[{{ $ii->id }}]"/>
         @endforeach
     </div>
     <div class="form-actions bnav row p-0">        
         <div class="col-3 p-0 mx-1">
-        <button type="submit" class="btn btn-block btn-raised btn-success">
+        <button type="submit" name="save" class="btn btn-block btn-raised btn-success">
             <i class="fa fa-save"></i>
         </button>
         </div>
@@ -37,18 +67,20 @@
         <button type="submit" name="payment" value="1" class="btn btn-block btn-raised btn-primary">
             Payment
         </button>
-        </div>
+    </div>
     </form>
         <div class="col-2 p-0 pl-2">
-        <form method="POST" action="{{ route('transaction.destroy',$item) }}">
+        @if(isset($trx))
+        <form method="POST" action="{{ route('transaction.destroy',$trx) }}">
         {{ csrf_field() }}
         {{ method_field('DELETE') }}
-            <a class="danger" onclick="if(confirm('Hapus {{ $item->name }}?')) this.closest('form').submit()">
+            <a class="danger" onclick="if(confirm('Hapus {{ $trx->name }}?')) this.closest('form').submit()">
                 <button type="submit" class="btn btn-block btn-raised btn-danger">
                     <i class="fa fa-trash"></i>
                 </button>
             </a>
         </form>
+        @endif
         </div>
     </div>
 </div>
@@ -59,25 +91,24 @@
 <script>
 $('.btn-number').click(function(e){
     e.preventDefault();
-    
+    var count = parseInt($('.count').html().replace(/\./g,''));
+    var totalprice = parseInt($('input[name=totalprice]').val());    
     fieldName = $(this).data('field');
     type      = $(this).data('type');
     price      = $(this).data('price');
     var input = $("input[name='"+fieldName+"']");
     var currentVal = parseInt(input.val());
-    var count = parseInt($('.count').html().replace(/\./g,''));
-    var subtotal = parseInt($('.subtotal').html().replace(/\./g,''));
     if (!isNaN(currentVal)) {
         if(type == 'minus') {
             
             if(currentVal > input.attr('min')) {
                 input.val(currentVal - 1).change();
                 count = count - 1;
-                subtotal = subtotal - price;
+                newtotal = totalprice - price;
                 $('input[name=count]').val(count);
-                $('input[name=subtotal]').val(subtotal);
+                $('input[name=totalprice]').val(newtotal);
                 $('.count').html(count);
-                $('.subtotal').html(number_format(subtotal));
+                calcpayment();
             } 
             if(parseInt(input.val()) == input.attr('min')) {
                 $(this).attr('disabled', true);
@@ -88,11 +119,11 @@ $('.btn-number').click(function(e){
             if(currentVal < input.attr('max')) {
                 input.val(currentVal + 1).change();
                 count = count + 1;
-                subtotal = subtotal + price;
+                newtotal = totalprice + price;
                 $('input[name=count]').val(count);
-                $('input[name=subtotal]').val(subtotal);
+                $('input[name=totalprice]').val(newtotal);
                 $('.count').html(count);
-                $('.subtotal').html(number_format(subtotal));
+                calcpayment();
             }
             if(parseInt(input.val()) == input.attr('max')) {
                 $(this).attr('disabled', true);
@@ -107,14 +138,13 @@ $('.input-number').on('focusin', function(){
    $(this).data('oldvalue', $(this).val());
 });
 $('.input-number').change(function() {
-    
+    var count = parseInt($('.count').html().replace(/\./g,''));
+    var totalprice = parseInt($('input[name=totalprice]').val());
     minValue =  parseInt($(this).attr('min'));
     maxValue =  parseInt($(this).attr('max'));
     valueCurrent = parseInt($(this).val());
     oldvalue = $(this).data('oldvalue');
     price      = $(this).data('price');
-    var count = parseInt($('.count').html().replace(/\./g,''));
-    var subtotal = parseInt($('.subtotal').html().replace(/\./g,''));
     
     name = $(this).attr('name');
     if(valueCurrent >= minValue) {
@@ -129,11 +159,11 @@ $('.input-number').change(function() {
     }
     
     count = count + valueCurrent - oldvalue;
-    subtotal = subtotal + (price * (valueCurrent - oldvalue));
+    newtotal = totalprice + (price * (valueCurrent - oldvalue));
     $('input[name=count]').val(count);
-    $('input[name=subtotal]').val(subtotal);
+    $('input[name=totalprice]').val(newtotal);
     $('.count').html(count);
-    $('.subtotal').html(number_format(subtotal));
+    calcpayment();
     
 });
 $(".input-number").keydown(function (e) {
@@ -151,5 +181,18 @@ $(".input-number").keydown(function (e) {
         e.preventDefault();
     }
 });
+$('input[name=downpayment]').change(function() {
+    calcpayment();
+});
+$('input[name=discount]').change(function() {
+    calcpayment();
+});
+
+function calcpayment() {
+    dp = $('input[name=downpayment]').val();
+    discount = $('input[name=discount]').val();
+    totalprice = parseInt($('input[name=totalprice]').val());
+    $('.subtotal').html(number_format(totalprice-discount-dp));
+}
 </script>
 @endsection

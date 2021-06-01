@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 
 // Auth::routes();
-Auth::routes(['register' => false]);
+Auth::routes(['register' => true]);
 
 Route::group([
     'middleware' => 'auth'
@@ -18,5 +18,6 @@ Route::group([
       Route::get('/transaction/downloadhistory', 'TransactionController@downloadhistory');
       Route::get('/transaction/generatedownloadhistory', 'TransactionController@generatedownloadhistory');
       Route::get('/transaction/payment/{a}', 'TransactionController@payment');
+      Route::get('/transaction/receipt/{a}', 'TransactionController@receipt');
       Route::resource('/transaction', 'TransactionController');
     });

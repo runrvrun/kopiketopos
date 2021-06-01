@@ -20,10 +20,10 @@
             $i = 0;
             $month = 0;
         ?>
-        @while($month != 202008)
+        @while($month != 202008)        
             <?php
-                $month = \Carbon\Carbon::now()->subMonth($i)->format('Ym'); 
-                $monthname = \Carbon\Carbon::now()->subMonth($i)->format('F Y');
+                $month = \Carbon\Carbon::now()->startOfMonth()->subMonth($i)->format('Ym'); 
+                $monthname = \Carbon\Carbon::now()->startOfMonth()->subMonth($i)->format('F Y');
                 $i = $i+1;
             ?>
             <option value="{{ $month }}">{{ $monthname }}</option>

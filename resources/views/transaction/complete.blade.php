@@ -4,6 +4,7 @@
 <div class="container">
     <div class="d-flex justify-content-center"><img src="{{ asset('images/check.gif') }}" style="width:75%"/></div>
     <div class="d-flex justify-content-center"><h3>Transaction Complete</h3></div>
+    <div class="d-flex justify-content-center"><a href="{{ url('/transaction/receipt/'.$id) }}">View Receipt</a></div>
 </div>
 @endsection
 @section('pagecss')

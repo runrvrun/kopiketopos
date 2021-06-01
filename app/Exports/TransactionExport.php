@@ -37,6 +37,7 @@ class TransactionExport implements FromQuery, WithHeadings, WithMapping, WithCol
             'Customer',
             'Total_Item',
             'Total_Price',
+            'Discount',
             'Status',
         ];
     }

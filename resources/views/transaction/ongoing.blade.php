@@ -4,7 +4,7 @@
 <div class="container">    
     <x-backnav title="Ongoing Transaction" button="add" backlink="{{ route('home') }}"/>
     @foreach($items as $item)
-    <x-transaction id="{{ $item->id }}" count="{{ $item->total_item }}" subtotal="{{ $item->total_price }}" button="edit" date="{{ $item->created_at->format('d/m') }}"/>
+    <x-transaction id="{{ $item->id }}" store="{{ $item->store->name ?? ''}}" count="{{ $item->total_item }}" subtotal="{{ $item->total_price-$item->discount }}" button="edit" date="{{ $item->created_at->format('d/m') }}"/>
     <div class="separator"></div>
     @endforeach
     <x-bnav current="ongoing"/>

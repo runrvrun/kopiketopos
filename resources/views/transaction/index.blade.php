@@ -10,7 +10,7 @@
     </div>
     @endif
     @foreach($transactions as $item)
-    <x-transaction id="{{ $item->id }}" count="{{ $item->total_item }}" subtotal="{{ $item->total_price }}" status="{{ $item->status }}" button="edit" date="{{ $item->created_at->format('d/m') }}"/>
+    <x-transaction id="{{ $item->id }}" store="{{ $item->store->name ?? ''}}" count="{{ $item->total_item }}" subtotal="{{ $item->total_price-$item->discount }}" status="{{ $item->status }}" button="edit" date="{{ $item->created_at->format('d/m') }}"/>
     <div class="separator"></div>
     @endforeach
     <x-bnav current="history"/>

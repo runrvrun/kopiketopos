@@ -20,7 +20,11 @@ class TransactionController extends Controller
      */
     public function index()
     {
-        $transactions = Transaction::orderBy('created_at','desc')->get();
+        if(Auth::user()->role == 'admin'){
+            $transactions = Transaction::with('store')->orderBy('created_at','desc')->get();
+        }else{
+            $transactions = Transaction::where('store_id',Auth::user()->store_id)->orderBy('created_at','desc')->get();
+        }
         return view('transaction.index',compact('transactions'));
     }
 
@@ -31,8 +35,8 @@ class TransactionController extends Controller
      */
     public function create()
     {
-        $products = Product::all();
-        return view('transaction.create', compact('products'));        
+        $items = Product::selectRaw('id, name, price, image, 0 as amount')->orderBy('name','asc')->get();
+        return view('transaction.transaction', compact('items'));        
     }
 
     /**
@@ -45,28 +49,32 @@ class TransactionController extends Controller
     {
         $requestData['user_id'] = Auth::user()->id;
         $requestData['total_item'] = $request->count;
-        $requestData['total_price'] = $request->subtotal;
+        $requestData['total_price'] = $request->totalprice;
+        $requestData['customer'] = $request->customer;
+        $requestData['discount'] = $request->discount;
+        $requestData['downpayment'] = $request->downpayment;
+        $requestData['store_id'] = (Auth::user()->store_id > 0)? Auth::user()->store_id : 1;
+        $trxtoday = Transaction::whereDate('created_at',Carbon::today())->count();
+        $datetoday = Carbon::now();
+        $requestData['key'] = $datetoday->format('Ymd').str_pad($trxtoday+1, 5, '0', STR_PAD_LEFT);
         $trx = Transaction::create($requestData);
-        $selecteditems = explode(',',$request->selecteditems);
-        $selit = array();
-        $prev_value = array('value' => null, 'amount' => null);
-        foreach ($selecteditems as $val) {
-            if ($prev_value['value'] != $val) {
-                unset($prev_value);
-                $prev_value = array('value' => $val, 'amount' => 0);
-                $selit[] =& $prev_value;
+        $requestData2 = $request->quant;
+        foreach($requestData2 as $key=>$value){
+            // insert only if amount > 0
+            if($value > 0){
+                $req['transaction_id'] = $trx->id;
+                $req['product_id'] = $key;
+                $req['amount'] = $value;
+                Product_transaction::create($req);
             }
-            $prev_value['amount']++;
-        }        
-        foreach($selit as $item){
-            $req['transaction_id'] = $trx->id;
-            $req['product_id'] = $item['value'];
-            $req['amount'] = $item['amount'];
-            Product_transaction::create($req);
         }
         Session::flash('message', 'Transaction created'); 
         Session::flash('alert-class', 'alert-success'); 
-        return redirect(route('transaction.edit',$trx));
+        if(isset($request->payment)){
+            return redirect('transaction/payment/'.$trx->id);
+        }else{
+            return redirect('transaction/ongoing');
+        }
     }
 
     /**
@@ -88,9 +96,13 @@ class TransactionController extends Controller
      */
     public function edit($id)
     {
-        $item = Transaction::find($id);
-        $item2 = Product_transaction::select('products.id','name','price','image','amount')->join('products','product_id','products.id')->where('transaction_id',$item->id)->get();
-        return view('transaction.update', compact('item','item2'));        
+        $trx = Transaction::find($id);
+        $items = Product_transaction::select('products.id','name','price','image','amount')->join('products','product_id','products.id')->where('transaction_id',$trx->id)->orderBy('name','asc')->get();
+        $itemids = Product_transaction::where('transaction_id',$trx->id)->pluck('product_id');
+        $allitems = Product::selectRaw('id, name, price, image, 0 as amount')->whereNotIn('id',$itemids)->orderBy('name','asc')->get();
+        $items = $items->merge($allitems);
+        // return view('transaction.transaction', compact('item','item2'));        
+        return view('transaction.transaction', compact('trx','items'));        
     }
 
     /**
@@ -106,17 +118,22 @@ class TransactionController extends Controller
             $requestData['status'] = 'Paid';
         }
         $requestData['total_item'] = $request->count;
-        $requestData['total_price'] = $request->subtotal;
+        $requestData['total_price'] = $request->totalprice;
         $requestData['customer'] = $request->customer;
+        $requestData['discount'] = $request->discount;
+        $requestData['downpayment'] = $request->downpayment;
         Transaction::find($id)->update($requestData);
         $requestData2 = $request->quant;
         $trx = Transaction::find($id);
         Product_transaction::where('transaction_id',$trx->id)->delete();
         foreach($requestData2 as $key=>$value){
-            $req['transaction_id'] = $trx->id;
-            $req['product_id'] = $key;
-            $req['amount'] = $value;
-            Product_transaction::create($req);
+            // insert only if amount > 0
+            if($value > 0){
+                $req['transaction_id'] = $trx->id;
+                $req['product_id'] = $key;
+                $req['amount'] = $value;
+                Product_transaction::create($req);
+            }
         }
         Session::flash('message', 'Transaction updated'); 
         Session::flash('alert-class', 'alert-success'); 
@@ -143,13 +160,24 @@ class TransactionController extends Controller
 
     public function ongoing()
     {
-        $items = Transaction::whereNull('status')->orderBy('created_at','desc')->get();
+        if(Auth::user()->role == 'admin'){
+            $items = Transaction::with('store')->whereNull('status')->orderBy('created_at','desc')->get();
+        }else{
+            $items = Transaction::where('store_id',Auth::user()->store_id)->whereNull('status')->orderBy('created_at','desc')->get();
+        }
         return view('transaction.ongoing',compact('items'));
     }
-
+    
     public function payment($id)
     {
-        return view('transaction.complete');
+        return view('transaction.complete', compact('id'));
+    }
+
+    public function receipt($id)
+    {
+        $transaction = Transaction::find($id);
+        $products = Product_transaction::with('product')->where('transaction_id',$id)->get();
+        return view('transaction.receipt', compact('transaction','products'));
     }
 
     public function downloadhistory()
