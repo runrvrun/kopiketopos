@@ -3,8 +3,11 @@
 Shared cPanel hosting (MultiPHP Manager, MariaDB, no Node). Built CSS/JS is
 committed in `public/build`, so the server only needs PHP 8.3+ and Composer.
 
-The v1 database is **never modified**: v2 gets a new database and
-`legacy:import` copies everything into it. Rollback = put the old folder back.
+The hosting allows only two databases (WordPress + POS), so v2 shares the POS
+database: every v1 table is renamed to `v1_*` (nothing is deleted), v2 creates
+its own tables, and `legacy:import` copies the v1 data across and verifies it.
+Rollback = drop the v2 tables, rename `v1_*` back, restore the old folder.
+(Rehearsed end-to-end on a copy of the production dump, including rollback.)
 
 ## 0. Before you start
 
@@ -35,11 +38,11 @@ Note the v1 DB user/password — they're in the v1 `.env`:
 grep -E '^DB_(HOST|DATABASE|USERNAME|PASSWORD)=' ~/pos.kopiketo.com/.env
 ```
 
-## 2. Create the v2 database
+## 2. Rename the v1 tables
 
-cPanel › MySQL Databases:
-1. Create database `posv2` (becomes `k3346760_posv2`).
-2. "Add User To Database": the same user as v1 → `k3346760_posv2` → ALL PRIVILEGES.
+phpMyAdmin › `k3346760_kopiketopos` › **SQL** tab → paste the contents of
+[`docs/deploy/1-rename-v1-tables.sql`](deploy/1-rename-v1-tables.sql) → Go.
+The table list should now show only `v1_…` tables.
 
 ## 3. Swap the code
 
@@ -58,7 +61,7 @@ $PHP composer.phar install --no-dev --optimize-autoloader --no-interaction
 
 ```bash
 cp .env.production.example .env
-nano .env          # fill DB_USERNAME, DB_PASSWORD (from step 1); check DB_DATABASE / LEGACY_DB_DATABASE
+nano .env          # fill DB_USERNAME, DB_PASSWORD (from step 1); DB_DATABASE and LEGACY_DB_DATABASE = the v1 DB name, LEGACY_DB_PREFIX=v1_
 $PHP artisan key:generate --force
 ```
 
@@ -99,10 +102,17 @@ cPanel writes the PHP handler into `~/pos.kopiketo.com/public/.htaccess`.
 
 ## Rollback
 
-```bash
-cd ~ && mv pos.kopiketo.com pos.kopiketo.com-v2 && mv pos.kopiketo.com-v1 pos.kopiketo.com
-```
-Then MultiPHP Manager: `pos.kopiketo.com` → PHP 7.2. v1 and its database are as before.
+1. phpMyAdmin › `k3346760_kopiketopos` › SQL → run [`docs/deploy/rollback-to-v1.sql`](deploy/rollback-to-v1.sql)
+   (drops the v2 tables, renames `v1_*` back).
+2. Restore the folder:
+   ```bash
+   cd ~ && mv pos.kopiketo.com pos.kopiketo.com-v2 && mv pos.kopiketo.com-v1 pos.kopiketo.com
+   ```
+3. MultiPHP Manager: `pos.kopiketo.com` → PHP 7.2. v1 is exactly as before.
+
+## Afterwards
+
+Once v2 has run fine for a while, the `v1_*` tables can be dropped (keep the step 1 backup).
 
 ## Later updates
 

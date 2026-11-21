@@ -95,7 +95,8 @@ return [
             'password' => env('LEGACY_DB_PASSWORD', env('DB_PASSWORD', '')),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
-            'prefix' => '',
+            // v1 tables renamed in place (e.g. "v1_") when v2 shares the same database.
+            'prefix' => env('LEGACY_DB_PREFIX', ''),
             'strict' => true,
             'timezone' => env('DB_TIMEZONE', '+07:00'),
         ],
