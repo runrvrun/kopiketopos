@@ -35,7 +35,7 @@ class TransactionController extends Controller
      */
     public function create()
     {
-        $items = Product::selectRaw('id, name, price, image, 0 as amount')->orderBy('name','asc')->get();
+        $items = Product::selectRaw('id, name, price, image, 0 as amount')->get();
         return view('transaction.transaction', compact('items'));        
     }
 
@@ -97,9 +97,9 @@ class TransactionController extends Controller
     public function edit($id)
     {
         $trx = Transaction::find($id);
-        $items = Product_transaction::select('products.id','name','price','image','amount')->join('products','product_id','products.id')->where('transaction_id',$trx->id)->orderBy('name','asc')->get();
+        $items = Product_transaction::select('products.id','name','price','image','amount')->join('products','product_id','products.id')->where('transaction_id',$trx->id)->get();
         $itemids = Product_transaction::where('transaction_id',$trx->id)->pluck('product_id');
-        $allitems = Product::selectRaw('id, name, price, image, 0 as amount')->whereNotIn('id',$itemids)->orderBy('name','asc')->get();
+        $allitems = Product::selectRaw('id, name, price, image, 0 as amount')->whereNotIn('id',$itemids)->get();
         $items = $items->merge($allitems);
         // return view('transaction.transaction', compact('item','item2'));        
         return view('transaction.transaction', compact('trx','items'));        
