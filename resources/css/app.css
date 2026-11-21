@@ -1,0 +1,154 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+/*
+ * Kopi Keto brand.
+ * caramel + espresso come straight from the logo; the rest is a warm
+ * coffee-shop palette built around them.
+ */
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display: 'Fraunces', ui-serif, Georgia, serif;
+
+    --color-espresso-950: #1f140f;
+    --color-espresso-900: #2e1e17;
+    --color-espresso-800: #432c21;
+    --color-espresso: #56392c; /* logo "KETO" */
+    --color-espresso-600: #6e4b3a;
+
+    --color-caramel-700: #8f6640;
+    --color-caramel-600: #a4774a;
+    --color-caramel: #bf9060; /* logo "KOPI" */
+    --color-caramel-300: #d9b88f;
+    --color-caramel-100: #f7efe5;
+
+    /* Mostly-white surfaces; warmth comes from the brand accents only. */
+    --color-cream: #f7f6f4; /* subtle fills (inputs, chips, totals) */
+    --color-latte: #e9e5e0; /* borders */
+    --color-foam: #ffffff; /* cards, header */
+    --color-roast: #7a6a60; /* muted body text */
+    --color-cherry: #b4412f; /* errors: coffee-cherry red */
+}
+
+@layer base {
+    html {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        @apply bg-white font-sans text-espresso-900 antialiased;
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+}
+
+@layer components {
+    .btn {
+        @apply inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold whitespace-nowrap transition select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-caramel active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
+    }
+
+    .btn-primary {
+        @apply bg-espresso text-foam shadow-sm shadow-espresso/20 hover:bg-espresso-800;
+    }
+
+    .btn-accent {
+        @apply bg-caramel text-espresso-950 shadow-sm shadow-caramel/30 hover:bg-caramel-600 hover:text-foam;
+    }
+
+    .btn-secondary {
+        @apply bg-white text-espresso-900 ring-1 ring-latte hover:bg-cream;
+    }
+
+    .btn-danger {
+        @apply bg-white text-cherry ring-1 ring-cherry/30 hover:bg-cherry/5;
+    }
+
+    .btn-icon {
+        @apply inline-flex size-10 items-center justify-center rounded-full text-roast transition hover:bg-latte/60 hover:text-espresso focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-caramel;
+    }
+
+    .input {
+        @apply block h-11 w-full rounded-xl border border-latte bg-white px-3.5 text-base text-espresso-900 transition placeholder:text-roast/50 focus:border-caramel focus:ring-4 focus:ring-caramel/20 focus:outline-none;
+    }
+
+    .label {
+        @apply mb-1.5 block text-sm font-medium text-espresso-800;
+    }
+
+    .field-error {
+        @apply mt-1.5 text-sm text-cherry;
+    }
+
+    .card {
+        @apply rounded-2xl bg-foam ring-1 ring-latte/80;
+    }
+
+    .chip {
+        @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+    }
+
+    .page-title {
+        @apply font-display text-2xl font-semibold text-espresso-900;
+    }
+
+    /* Horizontal scrollers (category chips) without a visible scrollbar */
+    .no-scrollbar {
+        scrollbar-width: none;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+@media print {
+    .print\:hidden-important,
+    [data-print-hide] {
+        display: none !important;
+    }
+
+    body {
+        background: #fff;
+    }
+}
+
+/* Rising steam over the cup illustration */
+@keyframes steam {
+    0% {
+        transform: translateY(6px) scaleX(1);
+        opacity: 0;
+    }
+    30% {
+        opacity: 0.85;
+    }
+    100% {
+        transform: translateY(-18px) scaleX(1.25);
+        opacity: 0;
+    }
+}
+
+.steam {
+    animation: steam 3.2s ease-out infinite;
+    transform-box: fill-box;
+    transform-origin: center bottom;
+}
+
+.steam-2 {
+    animation-delay: 1.05s;
+}
+
+.steam-3 {
+    animation-delay: 2.1s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .steam {
+        animation: none;
+        opacity: 0.6;
+    }
+}

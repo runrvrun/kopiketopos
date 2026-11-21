@@ -2,64 +2,73 @@
 
 namespace App\Exports;
 
-use App\Transaction;
-use Maatwebsite\Excel\Concerns\FromQuery;
-use Maatwebsite\Excel\Concerns\Exportable;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithMapping;
+use App\Models\Transaction;
+use Carbon\CarbonImmutable;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
-use Maatwebsite\Excel\Concerns\WithColumnFormatting;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
-class TransactionExport implements FromQuery, WithHeadings, WithMapping, WithColumnFormatting
+/**
+ * Monthly transaction export, same layout as v1:
+ * Date | Time | User | Customer | Total_Item | Total_Price | Discount | Status
+ *
+ * v1 skipped the discount value, so its Discount column held the status and
+ * Status was empty. Here each value sits under its own heading.
+ */
+class TransactionExport
 {
-    use Exportable;
+    public const HEADINGS = ['Date', 'Time', 'User', 'Customer', 'Total_Item', 'Total_Price', 'Discount', 'Status'];
 
-    public function __construct(int $month)
+    /** @param  array<int>  $storeIds */
+    public function __construct(private CarbonImmutable $month, private array $storeIds) {}
+
+    public function filename(): string
     {
-        $this->month = $month;
+        return 'kopiketo-transaction-'.$this->month->format('Y-m').'.xlsx';
     }
 
-    public function query()
+    public function spreadsheet(): Spreadsheet
     {
-        $month = $this->month;
-        $year = substr($month,0,4);
-        $month = substr($month,4,2);
-        return Transaction::query()->select('transactions.*','users.name')->join('users','user_id','users.id')->whereYear('transactions.created_at',$year)->whereMonth('transactions.created_at',$month);
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Worksheet');
+        $sheet->fromArray(self::HEADINGS, null, 'A1');
+
+        $row = 2;
+        Transaction::query()
+            ->leftJoin('users', 'users.id', '=', 'transactions.user_id')
+            ->select('transactions.*', 'users.name as user_name')
+            ->forStores($this->storeIds)
+            ->whereBetween('transactions.created_at', [$this->month->startOfMonth(), $this->month->endOfMonth()])
+            ->orderBy('transactions.created_at')
+            ->orderBy('transactions.id')
+            ->chunk(1000, function ($chunk) use ($sheet, &$row) {
+                foreach ($chunk as $t) {
+                    $excelDate = Date::dateTimeToExcel($t->created_at);
+                    $sheet->fromArray([
+                        $excelDate,
+                        $excelDate,
+                        $t->user_name,
+                        $t->customer,
+                        $t->total_item,
+                        $t->total_price,
+                        $t->discount,
+                        $t->status,
+                    ], null, 'A'.$row, true);
+                    $row++;
+                }
+            });
+
+        $last = max(2, $row - 1);
+        $sheet->getStyle("A2:A{$last}")->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_DATE_DDMMYYYY);
+        $sheet->getStyle("B2:B{$last}")->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_DATE_TIME3);
+
+        return $spreadsheet;
     }
 
-    public function headings(): array
+    public function writer(): Xlsx
     {
-        return [
-            'Date',
-            'Time',
-            'User',
-            'Customer',
-            'Total_Item',
-            'Total_Price',
-            'Discount',
-            'Status',
-        ];
-    }
-
-    public function map($row): array
-    {
-        return [
-            Date::dateTimeToExcel($row->created_at),
-            Date::dateTimeToExcel($row->created_at),
-            $row->name,
-            $row->customer,
-            $row->total_item,
-            $row->total_price,
-            $row->status,
-        ];
-    }
-
-    public function columnFormats(): array
-    {
-        return [
-            'A' => NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'B' => NumberFormat::FORMAT_DATE_TIME3,
-        ];
+        return new Xlsx($this->spreadsheet());
     }
 }
