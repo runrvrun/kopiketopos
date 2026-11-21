@@ -1,0 +1,70 @@
+{
+  "_fonts-B-wt6x0d.css": {
+    "file": "assets/fonts-B-wt6x0d.css",
+    "src": "_fonts-B-wt6x0d.css"
+  },
+  "_fraunces-600-normal-BFCDtZfi.woff2": {
+    "file": "assets/fraunces-600-normal-BFCDtZfi.woff2",
+    "src": "_fraunces-600-normal-BFCDtZfi.woff2"
+  },
+  "_fraunces-600-normal-DL5QCzvS.woff": {
+    "file": "assets/fraunces-600-normal-DL5QCzvS.woff",
+    "src": "_fraunces-600-normal-DL5QCzvS.woff"
+  },
+  "_fraunces-700-normal-CEOla-zY.woff2": {
+    "file": "assets/fraunces-700-normal-CEOla-zY.woff2",
+    "src": "_fraunces-700-normal-CEOla-zY.woff2"
+  },
+  "_fraunces-700-normal-DTjk5d1Q.woff": {
+    "file": "assets/fraunces-700-normal-DTjk5d1Q.woff",
+    "src": "_fraunces-700-normal-DTjk5d1Q.woff"
+  },
+  "_instrument-sans-400-normal-D1W7dsQl.woff": {
+    "file": "assets/instrument-sans-400-normal-D1W7dsQl.woff",
+    "src": "_instrument-sans-400-normal-D1W7dsQl.woff"
+  },
+  "_instrument-sans-400-normal-DRC__1Mx.woff2": {
+    "file": "assets/instrument-sans-400-normal-DRC__1Mx.woff2",
+    "src": "_instrument-sans-400-normal-DRC__1Mx.woff2"
+  },
+  "_instrument-sans-500-normal-Dk9ku72i.woff2": {
+    "file": "assets/instrument-sans-500-normal-Dk9ku72i.woff2",
+    "src": "_instrument-sans-500-normal-Dk9ku72i.woff2"
+  },
+  "_instrument-sans-500-normal-Z6ESRlEs.woff": {
+    "file": "assets/instrument-sans-500-normal-Z6ESRlEs.woff",
+    "src": "_instrument-sans-500-normal-Z6ESRlEs.woff"
+  },
+  "_instrument-sans-600-normal-B7fBEWYG.woff2": {
+    "file": "assets/instrument-sans-600-normal-B7fBEWYG.woff2",
+    "src": "_instrument-sans-600-normal-B7fBEWYG.woff2"
+  },
+  "_instrument-sans-600-normal-B9e8oLYv.woff": {
+    "file": "assets/instrument-sans-600-normal-B9e8oLYv.woff",
+    "src": "_instrument-sans-600-normal-B9e8oLYv.woff"
+  },
+  "node_modules/html-to-image/es/index.js": {
+    "file": "assets/es-DnAEnvrK.js",
+    "name": "es",
+    "src": "node_modules/html-to-image/es/index.js",
+    "isDynamicEntry": true
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-Baaua3Em.css",
+    "name": "app",
+    "names": [
+      "app.css"
+    ],
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-CNioguHC.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "node_modules/html-to-image/es/index.js"
+    ]
+  }
+}
