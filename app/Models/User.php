@@ -64,8 +64,19 @@ class User extends Authenticatable
     public function accessibleStores(): Collection
     {
         return $this->accessibleStoresCache ??= $this->isAdmin()
-            ? Store::orderBy('name')->get()
-            : $this->stores()->orderBy('name')->get();
+            ? Store::orderByDesc('is_active')->orderBy('name')->get()
+            : $this->stores()->orderByDesc('stores.is_active')->orderBy('name')->get();
+    }
+
+    /**
+     * Stores this user can take new orders in: accessible and active.
+     * (Inactive stores stay accessible for viewing their history.)
+     *
+     * @return Collection<int, Store>
+     */
+    public function orderableStores(): Collection
+    {
+        return $this->accessibleStores()->where('is_active', true)->values();
     }
 
     /** Admins may also open records of deleted stores (old receipts). */

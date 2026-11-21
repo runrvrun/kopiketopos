@@ -98,9 +98,16 @@
                                 @if ($user->hasAllStores())
                                     <option value="all" @selected($storeContext->isAll())>Semua toko</option>
                                 @endif
-                                @foreach ($stores as $store)
+                                @foreach ($stores->where('is_active', true) as $store)
                                     <option value="{{ $store->id }}" @selected($storeContext->currentId() === $store->id)>{{ $store->name }}</option>
                                 @endforeach
+                                @if ($stores->where('is_active', false)->isNotEmpty())
+                                    <optgroup label="Nonaktif">
+                                        @foreach ($stores->where('is_active', false) as $store)
+                                            <option value="{{ $store->id }}" @selected($storeContext->currentId() === $store->id)>{{ $store->name }} (nonaktif)</option>
+                                        @endforeach
+                                    </optgroup>
+                                @endif
                             </select>
                             <x-icon name="chevron-down" class="pointer-events-none absolute right-2 size-4 text-roast" />
                         </label>

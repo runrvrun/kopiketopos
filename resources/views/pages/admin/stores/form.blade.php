@@ -13,6 +13,7 @@ new #[Title('Toko')] class extends Component
     public string $name = '';
     public string $address = '';
     public string $phone = '';
+    public bool $isActive = true;
 
     public function mount(?Store $store = null): void
     {
@@ -21,6 +22,7 @@ new #[Title('Toko')] class extends Component
             $this->name = $store->name;
             $this->address = (string) $store->address;
             $this->phone = (string) $store->phone;
+            $this->isActive = $store->is_active;
         }
     }
 
@@ -30,6 +32,7 @@ new #[Title('Toko')] class extends Component
             'name' => ['required', 'string', 'max:100'],
             'address' => ['nullable', 'string', 'max:255'],
             'phone' => ['nullable', 'string', 'max:30'],
+            'isActive' => ['boolean'],
         ], [
             'name.required' => 'Nama toko wajib diisi.',
         ]);
@@ -39,6 +42,7 @@ new #[Title('Toko')] class extends Component
             'name' => $data['name'],
             'address' => $data['address'] ?: null,
             'phone' => $data['phone'] ?: null,
+            'is_active' => $data['isActive'],
         ])->save();
 
         session()->flash('status', $this->storeId ? 'Toko diperbarui' : 'Toko ditambahkan');
@@ -78,6 +82,14 @@ new #[Title('Toko')] class extends Component
             <input id="phone" type="tel" inputmode="tel" wire:model="phone" class="input">
             @error('phone') <p class="field-error">{{ $message }}</p> @enderror
         </div>
+
+        <label class="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-xl bg-cream px-3 py-2">
+            <span>
+                <span class="block text-sm font-medium text-espresso-900">Aktif</span>
+                <span class="block text-xs text-roast">Toko nonaktif tidak bisa dipakai untuk transaksi baru. Riwayat dan laporannya tetap ada.</span>
+            </span>
+            <input type="checkbox" wire:model="isActive" class="size-5 rounded-md accent-espresso">
+        </label>
 
         <div class="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-between">
             @if ($storeId)

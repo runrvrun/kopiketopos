@@ -31,8 +31,10 @@ class SaveTransaction
         ?int $customerId = null,
         ?string $customerPhone = null,
     ): Transaction {
-        if (! $user->canAccessStore($storeId)) {
-            throw ValidationException::withMessages(['storeId' => 'Pilih toko untuk transaksi ini.']);
+        // New orders need an active store; an existing order may keep its (now inactive) store.
+        $keepsStore = $transaction && $transaction->store_id === $storeId;
+        if (! $user->canAccessStore($storeId) || (! $keepsStore && ! $user->orderableStores()->contains('id', $storeId))) {
+            throw ValidationException::withMessages(['storeId' => 'Pilih toko aktif untuk transaksi ini.']);
         }
 
         $items = collect($items)

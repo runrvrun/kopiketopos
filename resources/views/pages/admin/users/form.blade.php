@@ -152,6 +152,7 @@ new #[Title('Pengguna')] class extends Component
                         <label class="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-1 text-sm text-espresso-900">
                             <input type="checkbox" wire:model="storeIds" value="{{ $store->id }}" class="size-5 rounded-md accent-espresso">
                             {{ $store->name }}
+                            @unless ($store->is_active)<span class="text-xs text-roast">(nonaktif)</span>@endunless
                         </label>
                     @empty
                         <p class="text-sm text-roast">Belum ada toko.</p>

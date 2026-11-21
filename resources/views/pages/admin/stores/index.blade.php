@@ -8,7 +8,7 @@ new #[Title('Toko')] class extends Component
 {
     public function with(): array
     {
-        return ['stores' => Store::withCount(['transactions', 'users'])->orderBy('name')->get()];
+        return ['stores' => Store::withCount(['transactions', 'users'])->orderByDesc('is_active')->orderBy('name')->get()];
     }
 };
 ?>
@@ -25,7 +25,10 @@ new #[Title('Toko')] class extends Component
                 <a href="{{ route('admin.stores.edit', $store) }}" class="card flex items-start gap-3 p-4 transition hover:ring-caramel-300">
                     <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-caramel-100 text-caramel-700"><x-icon name="store" /></span>
                     <div class="min-w-0 flex-1">
-                        <p class="font-semibold text-espresso-900">{{ $store->name }}</p>
+                        <p class="flex items-center gap-2 font-semibold text-espresso-900">
+                            {{ $store->name }}
+                            @unless ($store->is_active)<span class="chip bg-cream text-roast ring-1 ring-latte">Nonaktif</span>@endunless
+                        </p>
                         <p class="line-clamp-2 text-xs text-roast">{{ $store->address ?: 'Alamat belum diisi' }}</p>
                         <p class="mt-1.5 text-xs text-roast">{{ number_format($store->transactions_count, 0, ',', '.') }} transaksi · {{ $store->users_count }} staf</p>
                     </div>

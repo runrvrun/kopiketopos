@@ -401,12 +401,12 @@ class SalesAnalytics
 
         $byStore = $this->current->groupBy('store_id');
         $rows = Store::withTrashed()->whereIn('id', $this->storeIds)->orderBy('name')->get()
-            ->reject(fn ($s) => $s->trashed() && ! $byStore->has($s->id))
+            ->reject(fn ($s) => ($s->trashed() || ! $s->is_active) && ! $byStore->has($s->id))
             ->map(function ($s) use ($byStore) {
             $trx = $byStore[$s->id] ?? collect();
             $net = $trx->sum(fn ($t) => self::net($t));
 
-            return ['name' => $s->name.($s->trashed() ? ' (dihapus)' : ''), 'net' => $net, 'count' => $trx->count(), 'aov' => $trx->count() ? intdiv($net, $trx->count()) : 0];
+            return ['name' => $s->name.($s->trashed() ? ' (dihapus)' : (! $s->is_active ? ' (nonaktif)' : '')), 'active' => $s->is_active && ! $s->trashed(), 'net' => $net, 'count' => $trx->count(), 'aov' => $trx->count() ? intdiv($net, $trx->count()) : 0];
         })->sortByDesc('net')->values();
 
         $max = max(1, $rows->max('net') ?? 1);
@@ -491,7 +491,7 @@ class SalesAnalytics
         }
 
         foreach ($stores as $s) {
-            if ($s['count'] === 0) {
+            if ($s['count'] === 0 && $s['active']) {
                 $tips[] = ['icon' => 'store', 'tone' => 'warn', 'text' => "Toko {$s['name']} tidak punya penjualan di periode ini."];
             }
         }

@@ -135,8 +135,14 @@ new #[Title('Transaksi')] class extends Component
             ->limit(12)
             ->pluck('product_transaction.product_id');
 
-        $stores = $user->accessibleStores();
-        $storeId = $transaction?->store_id ?? $context->currentId() ?? ($stores->count() === 1 ? $stores->first()->id : null);
+        $stores = $user->orderableStores();
+        if ($transaction && ! $stores->contains('id', $transaction->store_id) && $transaction->store) {
+            $stores = $stores->push($transaction->store); // keep an inactive store on its own old order
+        }
+        $current = $context->currentId();
+        $storeId = $transaction?->store_id
+            ?? ($stores->contains('id', $current) ? $current : null)
+            ?? ($stores->count() === 1 ? $stores->first()->id : null);
 
         return [
             'transaction' => $transaction,
@@ -155,6 +161,7 @@ new #[Title('Transaksi')] class extends Component
                 'storeId' => $storeId,
             ],
             'chooseStore' => $stores->count() > 1,
+            'noActiveStore' => $stores->isEmpty(),
         ];
     }
 };
@@ -253,6 +260,12 @@ new #[Title('Transaksi')] class extends Component
 
         <div class="flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 pb-4">
             @error('items') <p class="rounded-xl bg-cherry/10 px-3 py-2 text-sm text-cherry">{{ $message }}</p> @enderror
+            @if ($noActiveStore)
+                <p class="rounded-xl bg-cherry/10 px-3 py-2 text-sm text-cherry">Tidak ada toko aktif untuk akun ini, jadi transaksi baru tidak bisa dibuat. Hubungi admin.</p>
+            @endif
+            @if (! $chooseStore)
+                @error('storeId') <p class="rounded-xl bg-cherry/10 px-3 py-2 text-sm text-cherry">{{ $message }}</p> @enderror
+            @endif
 
             @if ($chooseStore)
                 <div>
@@ -260,7 +273,7 @@ new #[Title('Transaksi')] class extends Component
                     <select id="trx-store" x-model.number="storeId" class="input">
                         <option value="">Pilih toko…</option>
                         @foreach ($stores as $store)
-                            <option value="{{ $store->id }}">{{ $store->name }}</option>
+                            <option value="{{ $store->id }}">{{ $store->name }}{{ $store->is_active ? '' : ' (nonaktif)' }}</option>
                         @endforeach
                     </select>
                     @error('storeId') <p class="field-error">{{ $message }}</p> @enderror

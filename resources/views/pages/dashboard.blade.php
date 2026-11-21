@@ -48,9 +48,9 @@ new #[Title('Home')] class extends Component
             ],
             'breakdown' => count($storeIds) > 1
                 ? Store::withTrashed()->whereIn('id', $storeIds)->orderBy('name')->get()
-                    ->reject(fn ($s) => $s->trashed() && ! isset($perStore[$s->id]))
+                    ->reject(fn ($s) => ($s->trashed() || ! $s->is_active) && ! isset($perStore[$s->id]))
                     ->map(fn ($s) => [
-                    'name' => $s->name.($s->trashed() ? ' (dihapus)' : ''),
+                    'name' => $s->name.($s->trashed() ? ' (dihapus)' : (! $s->is_active ? ' (nonaktif)' : '')),
                     'today' => (int) ($perStore[$s->id]->today_sales ?? 0),
                     'month' => (int) ($perStore[$s->id]->month_sales ?? 0),
                     'quarter' => (int) ($perStore[$s->id]->quarter_sales ?? 0),
